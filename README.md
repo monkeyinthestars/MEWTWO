@@ -1,2 +1,2 @@
 # MEWTWO
-Matchup Evaluation and Winrate Tracking for World-level Outcomes
+**M**atchup **E**valuation and **W**inrate **T**racking for **W**orld-level **O**utcomes
