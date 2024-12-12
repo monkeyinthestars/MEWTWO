@@ -2,6 +2,7 @@
 Goal: avoid redownloading static pages
 """
 
+import json
 import os
 import pickle
 from bs4 import BeautifulSoup
@@ -32,44 +33,37 @@ def get_page_from_url(url):
         nb_retry += 1
 
 
-
-if not os.path.exists("download_database.pkl"):
-    download_database = {}
-else:
-    with open("download_database.pkl", "rb") as f:
-        download_database = pickle.load(f)
-
-if not os.path.exists("download_database_soup.pkl"):
-    download_database_soup = {}
-else:
-    with open("download_database_soup.pkl", "rb") as f:
-        download_database_soup = pickle.load(f)
-
-
 def get_url(url):
-    global download_database
-    if url in download_database.keys():
-        return download_database[url]
+    path_on_disk = url.replace("https://", "").replace("http://", "")
+    if os.path.exists(path_on_disk):
+        with open(path_on_disk, "rb") as f:
+            content = f.read()
+        return content
     page = get_page_from_url(url)
-    download_database[url] = page
-    return page
+    content = page.content
+    os.makedirs(os.path.dirname(path_on_disk), exist_ok=True)
+    with open(path_on_disk, "wb") as f:
+        f.write(content)
+    return content
+
 
 def get_soup_from_url(url):
-    global download_database_soup
-    if url in download_database_soup.keys():
-        return download_database_soup[url]
-    page = get_page_from_url(url)
-    soup = BeautifulSoup(page.content, "html.parser")
-    download_database_soup[url] = soup
-    
-    if len(download_database_soup.keys()) % 10 == 0:
-        save_download_database_soup()
+    content = get_url(url)
 
+    soup = BeautifulSoup(content, "html.parser")
     return soup
 
-
-def save_download_database_soup():
-    global download_database_soup
+from mlp.chrono import start_chrono
+def save_download_database():
+    print("Saving download database...")
+    chrono = start_chrono()
+    global download_database
     
-    with open("download_database_soup.pkl", "wb") as f:
-        pickle.dump(download_database_soup, f, protocol=5)
+    with open("download_database.json", "w") as f:
+        json.dump(download_database, f)
+
+    with open("download_database.pkl", "wb") as f:
+        pickle.dump(download_database, f)
+    
+    elapsed = chrono.elapsed_str()
+    print(f"download_database saved in {elapsed}")

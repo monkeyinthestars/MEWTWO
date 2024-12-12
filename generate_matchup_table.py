@@ -3,7 +3,7 @@ import time
 
 from bs4 import BeautifulSoup
 
-from download_manager import get_soup_from_url, save_download_database_soup
+from download_manager import get_soup_from_url
 from archetype_parser import parse_decklist_into_archetype
 from mlp.html_table import create_html_table
 
@@ -225,9 +225,9 @@ def main():
     matchup_table = remove_low_occurrences(matchup_table, nb_occurence_min=1)
     print("Parsing data...")
     table_data = parse_matchup_table_into_table_data(matchup_table)
+    print(table_data)
     print("Creating html table...")
     create_html_table(table_data, "matchups.html")
-    save_download_database_soup()
 
 if __name__ == "__main__":
     main()
