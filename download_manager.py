@@ -35,6 +35,9 @@ def get_page_from_url(url):
 
 def get_url(url):
     path_on_disk = url.replace("https://", "").replace("http://", "")
+    path_on_disk = path_on_disk.replace("?", "__QUESTIONMARKTOKEN__")
+    path_on_disk = path_on_disk.replace("&", "__AMPTOKEN__")
+    path_on_disk = path_on_disk.replace("=", "__EQTOKEN__")
     if os.path.exists(path_on_disk):
         with open(path_on_disk, "rb") as f:
             content = f.read()
