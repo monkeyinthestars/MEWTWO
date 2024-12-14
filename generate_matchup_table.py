@@ -1,12 +1,8 @@
-import pickle
-import time
-
-from bs4 import BeautifulSoup
 
 from download_manager import get_soup_from_url
 from archetype_parser import parse_decklist_into_archetype
 from mlp.html_table import create_html_table
-
+from typing import Dict, List
 
 RK9_URL = "https://rk9.gg/pairings/ORL01mtNi5LV1IgmscGJ" # Orlando
 RK9_URL = "https://rk9.gg/pairings/SAO01mt4psEefFM1ZHAx" # Sao Paulo
@@ -130,7 +126,16 @@ def get_all_pairings_per_round(tournament_url):
     return round_history
 
 
-def get_matchup_table_from_tournament_url(url_list):
+def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, Dict[str, List]]:
+    """Generate a matchup table from the RK9 tournament URL given
+
+    Args:
+        url_list (List[str]): List of RK9 URLs
+        from_round_n (int, optional): The matchup table is going to be generated from the specified round onward. This way, you can accept only players from day2. Defaults to 0.
+
+    Returns:
+        Dict[Dict[List]]: The matchup table of all archetypes. You can use: wins, loses, ties = matchuptable[archetype1][archetype2]
+    """
     archetype_list = []
     for url in url_list:
         players_infos = get_players_infos_from_tournament_url(url)
@@ -155,24 +160,25 @@ def get_matchup_table_from_tournament_url(url_list):
 
         all_pairings_per_round = get_all_pairings_per_round(url)
         
-        for match_list in all_pairings_per_round:
-            for (player1_name, player2_name, winner) in match_list:
-                if player1_name in players_infos.keys() and player2_name in players_infos.keys():
-                    archetype_p1 = ", ".join(players_infos[player1_name]["archetype"])
-                    if archetype_p1 in list_of_archetypes_appearing_only_once:
-                        archetype_p1 = "unown"
-                    archetype_p2 = ", ".join(players_infos[player2_name]["archetype"])
-                    if archetype_p2 in list_of_archetypes_appearing_only_once:
-                        archetype_p2 = "unown"
-                    if winner == "P1":
-                        matchup_table[archetype_p1][archetype_p2][0] += 1
-                        matchup_table[archetype_p2][archetype_p1][1] += 1
-                    if winner == "P2":
-                        matchup_table[archetype_p2][archetype_p1][0] += 1
-                        matchup_table[archetype_p1][archetype_p2][1] += 1
-                    if winner == "TIE":
-                        matchup_table[archetype_p2][archetype_p1][2] += 1
-                        matchup_table[archetype_p1][archetype_p2][2] += 1
+        for round_n, match_list in enumerate(all_pairings_per_round):
+            if round_n < from_round_n:
+                for (player1_name, player2_name, winner) in match_list:
+                    if player1_name in players_infos.keys() and player2_name in players_infos.keys():
+                        archetype_p1 = ", ".join(players_infos[player1_name]["archetype"])
+                        if archetype_p1 in list_of_archetypes_appearing_only_once:
+                            archetype_p1 = "unown"
+                        archetype_p2 = ", ".join(players_infos[player2_name]["archetype"])
+                        if archetype_p2 in list_of_archetypes_appearing_only_once:
+                            archetype_p2 = "unown"
+                        if winner == "P1":
+                            matchup_table[archetype_p1][archetype_p2][0] += 1
+                            matchup_table[archetype_p2][archetype_p1][1] += 1
+                        if winner == "P2":
+                            matchup_table[archetype_p2][archetype_p1][0] += 1
+                            matchup_table[archetype_p1][archetype_p2][1] += 1
+                        if winner == "TIE":
+                            matchup_table[archetype_p2][archetype_p1][2] += 1
+                            matchup_table[archetype_p1][archetype_p2][2] += 1
 
     return matchup_table
 
@@ -230,7 +236,7 @@ def remove_low_occurrences(matchup_table, nb_occurence_min=1):
 
 def main():
     print("Getting matchup table...")
-    matchup_table = get_matchup_table_from_tournament_url(RK9_URL_LIST)
+    matchup_table = get_matchup_table(RK9_URL_LIST, from_round_n=8)
     print("Cleaning data...")
     matchup_table = remove_low_occurrences(matchup_table, nb_occurence_min=1)
     print("Parsing data...")

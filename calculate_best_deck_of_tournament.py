@@ -1,6 +1,6 @@
 from collections import Counter
 
-from generate_matchup_table import get_matchup_table_from_tournament_url, get_players_infos_from_tournament_url
+from generate_matchup_table import get_matchup_table, get_players_infos_from_tournament_url
 
 
 RK9_URL = "https://rk9.gg/pairings/NA01wsS5yrQoQIs3mDtB" # NAIC
@@ -53,7 +53,7 @@ def main():
     print("Getting archetype repartition...")
     archetype_repartition = get_repartition_of_archetypes(RK9_URL_LIST)
     print("Getting matchup table...")
-    matchup_table = get_matchup_table_from_tournament_url(RK9_URL)
+    matchup_table = get_matchup_table(RK9_URL)
     print(matchup_table)
     
     score_per_archetype = {}
