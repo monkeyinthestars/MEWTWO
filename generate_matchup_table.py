@@ -1,9 +1,11 @@
 
+from collections import Counter
 from typing import Dict, List
+
+from mlp.html_table import create_html_table
 
 from archetype_parser import parse_decklist_into_archetype
 from download_manager import get_soup_from_url
-from mlp.html_table import create_html_table
 
 RK9_URL = "https://rk9.gg/pairings/ORL01mtNi5LV1IgmscGJ" # Orlando
 RK9_URL = "https://rk9.gg/pairings/SAO01mt4psEefFM1ZHAx" # Sao Paulo
@@ -18,7 +20,7 @@ RK9_URL_LIST = [
     "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
 ]
 
-def get_decklist_from_url(url):
+def get_decklist_from_url(url: str):
     soup = get_soup_from_url(url)
     table = soup.findAll("table")[0]
     all_card_lines = table.findAll("li")
@@ -38,7 +40,7 @@ def get_decklist_from_url(url):
     decklist = list(decklist.items())
     number_of_card_in_deck = sum([quantity for card, quantity in decklist])
     if number_of_card_in_deck != 60:
-        raise Exception(f"The decklist doesn't count 60 cards! (Number of card found: {number_of_card_in_deck})")
+        raise ValueError(f"The decklist doesn't count 60 cards! (Number of card found: {number_of_card_in_deck})")
     return decklist
 
 
@@ -90,8 +92,8 @@ Get the max number of round displayed so far
 def _max_round_from_soup(soup):
     round_number = 1
     while True:
-        round_N_div = soup.find("div", {"id": f"P2R{round_number}"})
-        if round_N_div == None:
+        round_n_div = soup.find("div", {"id": f"P2R{round_number}"})
+        if round_n_div == None:
             return round_number-1
         round_number += 1
 
@@ -117,12 +119,14 @@ def get_all_pairings_per_round(tournament_url):
             else:
                 player_name2 = div_player2.find("span").text
             if "winner" in div_player1["class"]:
-                winner = "P1"
-            if "tie" in div_player1["class"]:
-                winner = "TIE"
-            if "winner" in div_player2["class"]:
-                winner = "P2"
-            match_list_of_this_round.append((player_name1, player_name2, winner))
+                winner_tag = "P1"
+            elif "tie" in div_player1["class"]:
+                winner_tag = "TIE"
+            elif "winner" in div_player2["class"]:
+                winner_tag = "P2"
+            else:
+                raise KeyError("Winner not found while looking at the match div")
+            match_list_of_this_round.append((player_name1, player_name2, winner_tag))
         round_history.append(match_list_of_this_round)
     return round_history
 
@@ -132,10 +136,12 @@ def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, D
 
     Args:
         url_list (List[str]): List of RK9 URLs
-        from_round_n (int, optional): The matchup table is going to be generated from the specified round onward. This way, you can accept only players from day2. Defaults to 0.
+        from_round_n (int, optional): The matchup table is going to be generated from the specified round onward.
+        This way, you can accept only players from day2. Defaults to 0.
 
     Returns:
-        Dict[Dict[List]]: The matchup table of all archetypes. You can use: wins, loses, ties = matchuptable[archetype1][archetype2]
+        Dict[Dict[List]]: The matchup table of all archetypes.
+        You can use: wins, loses, ties = matchuptable[archetype1][archetype2]
     """
     archetype_list = []
     for url in url_list:
@@ -144,23 +150,34 @@ def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, D
         for infos in players_infos.values():
             archetype = ", ".join(infos["archetype"])
             archetype_list.append(archetype)
-            
-    list_of_archetypes_appearing_only_once = [archetype for archetype in archetype_list if archetype_list.count(archetype) == 1]
-    print(f"The following archetypes are only played by one player, they are going to be labelled as 'unown': {list_of_archetypes_appearing_only_once}")    
+
+    _archetype_counts = Counter(archetype_list)
+    list_of_archetypes_appearing_only_once = [archetype for archetype, count in _archetype_counts.items() if count == 1]
+
+    print(
+        "The following archetypes are only played by one player, "
+        "they are going to be labelled as 'unown': "
+        f"{list_of_archetypes_appearing_only_once}"
+    )
     archetype_list = list(set(archetype_list))
     archetype_list = [archetype for archetype in archetype_list if not archetype in list_of_archetypes_appearing_only_once]
     if list_of_archetypes_appearing_only_once != []:
         if not "unown" in archetype_list:
             archetype_list += ["unown"]
     print(f"List of archetypes processed: {archetype_list}")
-    
-    matchup_table = {archetype: {archetype_vs: [0, 0, 0] for archetype_vs in archetype_list} for archetype in archetype_list}
+
+    matchup_table = {}
+    for archetype in archetype_list:
+        archetype_matchup_scores = {}
+        for opposing_archetype in archetype_list:
+            archetype_matchup_scores[opposing_archetype] = [0, 0, 0]
+        matchup_table[archetype] = archetype_matchup_scores
 
     for url in url_list:
         players_infos = get_players_infos_from_tournament_url(url)
 
         all_pairings_per_round = get_all_pairings_per_round(url)
-        
+
         for round_n, match_list in enumerate(all_pairings_per_round):
             if round_n < from_round_n:
                 for (player1_name, player2_name, winner) in match_list:
@@ -213,17 +230,28 @@ def parse_matchup_table_into_table_data(matchup_data):
             return ""
         return f"{100 * heat:.1f}".rstrip('0').rstrip('.') + "%"
 
-    html_data = {
-        get_img_tags_for_archetype(archetype_p1): {
-            get_img_tags_for_archetype(archetype_p2): {
-                "heat": matchup_ratio[archetype_p1][archetype_p2],
-                "text": format_text_for_heatmap(matchup_ratio[archetype_p1][archetype_p2]),
-                "tooltip": f"{get_img_tags_for_archetype(archetype_p1)} VS {get_img_tags_for_archetype(archetype_p2)}</br>{format_text_for_heatmap(matchup_ratio[archetype_p1][archetype_p2])}</br>{'-'.join([str(x) for x in matchup_data[archetype_p1][archetype_p2]])}",
+    html_data = {}
+
+    for archetype_p1 in archetype_list:
+        p1_img_tags = get_img_tags_for_archetype(archetype_p1)
+        html_data[p1_img_tags] = {}
+
+        for archetype_p2 in archetype_list:
+            p2_img_tags = get_img_tags_for_archetype(archetype_p2)
+            heat_value = matchup_ratio[archetype_p1][archetype_p2]
+            formatted_text = format_text_for_heatmap(heat_value)
+            tooltip_text = (
+                f"{p1_img_tags} VS {p2_img_tags}</br>"
+                f"{formatted_text}</br>"
+                f"{'-'.join([str(x) for x in matchup_data[archetype_p1][archetype_p2]])}"
+            )
+
+            html_data[p1_img_tags][p2_img_tags] = {
+                "heat": heat_value,
+                "text": formatted_text,
+                "tooltip": tooltip_text,
             }
-            for archetype_p2 in archetype_list
-        }
-        for archetype_p1 in archetype_list
-    }
+
 
     return html_data
 
@@ -235,7 +263,7 @@ def remove_low_occurrences(matchup_table, nb_occurence_min=1):
                 matchup_table[archetype1][archetype2] = [0, 0, 0]
     return matchup_table
 
-def main():
+if __name__ == "__main__":
     print("Getting matchup table...")
     matchup_table = get_matchup_table(RK9_URL_LIST, from_round_n=8)
     print("Cleaning data...")
@@ -245,6 +273,3 @@ def main():
     print(table_data)
     print("Creating html table...")
     create_html_table(table_data, "matchups.html")
-
-if __name__ == "__main__":
-    main()
