@@ -44,13 +44,13 @@ def get_decklist_from_url(url):
         raise Exception(f"The decklist doesn't count 60 cards! (Number of card found: {number_of_card_in_deck})")
     return decklist
 
-# Returns a dict {"Player Name [COUNTRY]": {"decklist": [cards], "archetype": ["pokemon1", "pokemon2"]} }
-def get_players_infos_from_tournament_url(url):
+
+def get_decklist_url_per_player(url: str) -> dict[str, str]:
     tournament_url_code = url.split("/")[-1]
     roster_url = f"https://rk9.gg/roster/{tournament_url_code}"
     soup = get_soup_from_url(roster_url)
 
-    player_database = {}
+    decklist_url_per_player = {}
 
     roster_table = soup.findAll("div", class_="card-body")[0].findAll("tbody")[0]
     table_row_list = roster_table.findAll("tr")
@@ -66,14 +66,24 @@ def get_players_infos_from_tournament_url(url):
             continue
         if decklist_status == "View":
             decklist_url = "https://rk9.gg" + decklist_slot.findAll("a")[0]["href"]
-            decklist = get_decklist_from_url(decklist_url)
-            archetype = parse_decklist_into_archetype(decklist)
-            if archetype == ["unown"]:
-                print(decklist_url)
-
             player_name_whole = f"{first_name} {last_name} [{country}]"
-            player_database[player_name_whole] = {"decklist": decklist, "archetype": archetype}
-    # print(player_database)
+            decklist_url_per_player[player_name_whole] = decklist_url
+
+    return decklist_url_per_player
+
+
+# Returns a dict {"Player Name [COUNTRY]": {"decklist": [cards], "archetype": ["pokemon1", "pokemon2"]} }
+def get_players_infos_from_tournament_url(url):
+    player_database = {}
+    decklist_url_per_player = get_decklist_url_per_player(url)
+
+    for playername, decklist_url in decklist_url_per_player.items():
+        decklist = get_decklist_from_url(decklist_url)
+        archetype = parse_decklist_into_archetype(decklist)
+        if archetype == ["unown"]:
+            print(decklist_url)
+
+        player_database[playername] = {"decklist": decklist, "archetype": archetype}
     return player_database
 
 
