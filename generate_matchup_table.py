@@ -1,7 +1,20 @@
+"""
+Module for analyzing tournament data and archetype matchups.
+
+This module processes tournament data from RK9.gg, including player decklists, match pairings, and archetype statistics.
+It supports analyzing player performance, generating archetype matchup tables, and visualizing results as HTML.
+
+Example Usage:
+    matchup_table = get_matchup_table(RK9_URL_LIST, from_round_n=8)
+    cleaned_table = remove_low_occurrences(matchup_table, nb_occurence_min=2)
+    table_data = parse_matchup_table_into_table_data(cleaned_table)
+    create_html_table(table_data, "matchups.html")
+"""
 
 from collections import Counter
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
+from bs4 import BeautifulSoup
 from mlp.html_table import create_html_table
 
 from archetype_parser import parse_decklist_into_archetype
@@ -20,7 +33,21 @@ RK9_URL_LIST = [
     "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
 ]
 
-def get_decklist_from_url(url: str):
+
+def get_decklist_from_url(url: str) -> List[Tuple[str, int]]:
+    """
+    Retrieve a player's decklist from the given URL.
+    URL should be in the form https://rk9.gg/decklist/public/...
+
+    Args:
+        url (str): The URL of the decklist.
+
+    Returns:
+        List[Tuple[str, int]]: A list of cards and their quantities in the decklist.
+
+    Raises:
+        ValueError: If the decklist does not have exactly 60 cards.
+    """
     soup = get_soup_from_url(url)
     table = soup.findAll("table")[0]
     all_card_lines = table.findAll("li")
@@ -44,7 +71,17 @@ def get_decklist_from_url(url: str):
     return decklist
 
 
-def get_decklist_url_per_player(url: str) -> dict[str, str]:
+
+def get_decklist_url_per_player(url: str) -> Dict[str, str]:
+    """
+    Retrieve a mapping of player names to their decklist URLs.
+
+    Args:
+        url (str): The URL of the tournament's roster page.
+
+    Returns:
+        Dict[str, str]: A dictionary mapping player names to decklist URLs.
+    """
     tournament_url_code = url.split("/")[-1]
     roster_url = f"https://rk9.gg/roster/{tournament_url_code}"
     soup = get_soup_from_url(roster_url)
@@ -71,8 +108,18 @@ def get_decklist_url_per_player(url: str) -> dict[str, str]:
     return decklist_url_per_player
 
 
-# Returns a dict {"Player Name [COUNTRY]": {"decklist": [cards], "archetype": ["pokemon1", "pokemon2"]} }
-def get_players_infos_from_tournament_url(url):
+def get_players_decklist_infos_from_tournament_url(url: str) -> Dict[str, Dict[str, List[str]]]:
+    """
+    Get decklist and archetype of every players in a tournament.
+
+    Args:
+        url (str): The URL of the tournament.
+
+    Returns:
+        Dict[str, Dict[str, List]]: A dictionary with player details, including decklist and archetype.
+            The returned dict is formatted as such:
+            `{"Player Name [COUNTRY]": {"decklist": [cards], "archetype": ["pokemon1", "pokemon2"]} }`
+    """
     player_database = {}
     decklist_url_per_player = get_decklist_url_per_player(url)
 
@@ -86,10 +133,16 @@ def get_players_infos_from_tournament_url(url):
     return player_database
 
 
-"""
-Get the max number of round displayed so far
-"""
-def _max_round_from_soup(soup):
+def _max_round_from_soup(soup: BeautifulSoup) -> int:
+    """
+    Determine the maximum number of rounds displayed in the given soup.
+
+    Args:
+        soup (BeautifulSoup): The tournament page.
+
+    Returns:
+        int: The maximum round number.
+    """
     round_number = 1
     while True:
         round_n_div = soup.find("div", {"id": f"P2R{round_number}"})
@@ -97,8 +150,22 @@ def _max_round_from_soup(soup):
             return round_number-1
         round_number += 1
 
-def get_all_pairings_per_round(tournament_url):
 
+def get_all_pairings_per_round(tournament_url: str) -> List[List[Tuple[str, str, str]]]:
+    """
+    Retrieve all pairings for each round of a tournament.
+
+    Args:
+        tournament_url (str): The URL of the tournament.
+
+    Returns:
+        List[List[Tuple[str, str, str]]]: A list of matches per round.
+            A match is a tuple formatted as:
+            `(player_name1, player_name2, winner_tag)`
+            If player1 won, winner_tag is "P1"
+            If player2 won, winner_tag is "P2"
+            If there is a tie, winner_tag is "TIE"
+    """
     round_history = []
     max_number_of_rounds = 18
     for round_n in range(1, max_number_of_rounds+1):
@@ -137,15 +204,15 @@ def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, D
     Args:
         url_list (List[str]): List of RK9 URLs
         from_round_n (int, optional): The matchup table is going to be generated from the specified round onward.
-        This way, you can accept only players from day2. Defaults to 0.
+            This way, you can accept only players from day2. Defaults to 0.
 
     Returns:
         Dict[Dict[List]]: The matchup table of all archetypes.
-        You can use: wins, loses, ties = matchuptable[archetype1][archetype2]
+        You can use: `wins, loses, ties = matchup_table[archetype1][archetype2]`
     """
     archetype_list = []
     for url in url_list:
-        players_infos = get_players_infos_from_tournament_url(url)
+        players_infos = get_players_decklist_infos_from_tournament_url(url)
 
         for infos in players_infos.values():
             archetype = ", ".join(infos["archetype"])
@@ -174,7 +241,7 @@ def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, D
         matchup_table[archetype] = archetype_matchup_scores
 
     for url in url_list:
-        players_infos = get_players_infos_from_tournament_url(url)
+        players_infos = get_players_decklist_infos_from_tournament_url(url)
 
         all_pairings_per_round = get_all_pairings_per_round(url)
 
@@ -201,14 +268,33 @@ def get_matchup_table(url_list: List[str], from_round_n: int = 0) -> Dict[str, D
     return matchup_table
 
 
-def get_img_tags_for_archetype(archetype):
+def get_img_tags_for_archetype(archetype: str) -> str:
+    """
+    Generate HTML image tags for a given archetype.
+
+    Args:
+        archetype (str): Archetype name.
+
+    Returns:
+        str: HTML string with image tags for the archetype.
+    """
     result = ""
     for pokemon in archetype.split(", "):
         pokemon_png_url = f"https://limitlesstcg.s3.us-east-2.amazonaws.com/pokemon/gen9/{pokemon}.png"
         result += f"<img src={pokemon_png_url} style=\"35px;\">"
     return result
 
-def parse_matchup_table_into_table_data(matchup_data):
+def parse_matchup_table_into_table_data(matchup_data: Dict[str, Dict[str, List[int]]]) -> Dict[str, Dict[str, Dict]]:
+    """
+    Parse the matchup table into data suitable for rendering an HTML table.
+
+    Args:
+        matchup_data (Dict[str, Dict[str, List[int]]]): Matchup data by archetype.
+            The correct format is `matchup_data[archetype_p1][archetype_p2] = (win, lose, tie)`
+
+    Returns:
+        Dict[str, Dict[str, Dict]]: HTML-ready data for the matchup table.
+    """
     archetype_list = matchup_data.keys()
     matchup_ratio = {
         archetype_p1: {
@@ -255,11 +341,22 @@ def parse_matchup_table_into_table_data(matchup_data):
 
     return html_data
 
-def remove_low_occurrences(matchup_table, nb_occurence_min=1):
+def remove_low_occurrences(matchup_table: Dict[str, Dict[str, List[int]]],
+                           nb_occurence_min: int = 2) -> Dict[str, Dict[str, List[int]]]:
+    """
+    Remove archetypes with low occurrences from the matchup table.
+
+    Args:
+        matchup_table (Dict[str, Dict[str, List[int]]]): Matchup data by archetype.
+        nb_occurence_min (int, optional): Minimum number of occurrences to keep an archetype.
+
+    Returns:
+        Dict[str, Dict[str, List[int]]]: Cleaned matchup table.
+    """
     for archetype1, matchup_of_archetype1 in matchup_table.items():
         for archetype2 in matchup_of_archetype1.keys():
             number_of_match_played = sum(matchup_table[archetype1][archetype2])
-            if number_of_match_played <= nb_occurence_min:
+            if number_of_match_played < nb_occurence_min:
                 matchup_table[archetype1][archetype2] = [0, 0, 0]
     return matchup_table
 
