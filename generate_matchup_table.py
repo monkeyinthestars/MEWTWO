@@ -1,8 +1,9 @@
 
-from download_manager import get_soup_from_url
-from archetype_parser import parse_decklist_into_archetype
-from mlp.html_table import create_html_table
 from typing import Dict, List
+
+from archetype_parser import parse_decklist_into_archetype
+from download_manager import get_soup_from_url
+from mlp.html_table import create_html_table
 
 RK9_URL = "https://rk9.gg/pairings/ORL01mtNi5LV1IgmscGJ" # Orlando
 RK9_URL = "https://rk9.gg/pairings/SAO01mt4psEefFM1ZHAx" # Sao Paulo

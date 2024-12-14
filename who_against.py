@@ -1,7 +1,6 @@
 
 
-from generate_matchup_table import get_players_infos_from_tournament_url, get_all_pairings_per_round
-
+from generate_matchup_table import get_all_pairings_per_round, get_players_infos_from_tournament_url
 
 RK9_TOURNAMENT_URL = "https://rk9.gg/pairings/LA01mwu6ugCwMEJxWT2H"
 

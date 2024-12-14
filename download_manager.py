@@ -5,13 +5,12 @@ Goal: avoid redownloading static pages
 import json
 import os
 import pickle
-from bs4 import BeautifulSoup
-import requests
 import time
 
+import requests
+from bs4 import BeautifulSoup
 from mlp import print_del
-
-
+from mlp.chrono import start_chrono
 
 only_useragent_headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/80.0",
@@ -56,17 +55,18 @@ def get_soup_from_url(url):
     soup = BeautifulSoup(content, "html.parser")
     return soup
 
-from mlp.chrono import start_chrono
+
+
 def save_download_database():
     print("Saving download database...")
     chrono = start_chrono()
     global download_database
-    
+
     with open("download_database.json", "w") as f:
         json.dump(download_database, f)
 
     with open("download_database.pkl", "wb") as f:
         pickle.dump(download_database, f)
-    
+
     elapsed = chrono.elapsed_str()
     print(f"download_database saved in {elapsed}")

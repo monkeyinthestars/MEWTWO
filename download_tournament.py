@@ -1,10 +1,8 @@
 import random
 import threading
 
-
 from download_manager import get_url
 from generate_matchup_table import get_decklist_url_per_player
-
 
 RK9_URL = "https://rk9.gg/pairings/LA01mwu6ugCwMEJxWT2H" # LAIC
 NB_CONCURENCY = 10

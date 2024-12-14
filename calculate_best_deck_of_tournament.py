@@ -2,7 +2,6 @@ from collections import Counter
 
 from generate_matchup_table import get_matchup_table, get_players_infos_from_tournament_url
 
-
 RK9_URL = "https://rk9.gg/pairings/NA01wsS5yrQoQIs3mDtB" # NAIC
 
 WIN_POINTS  = 3
