@@ -286,7 +286,7 @@ def get_img_tags_for_archetype(archetype: str) -> str:
     """
     result = ""
     for pokemon in archetype.split(", "):
-        pokemon_png_url = f"https://limitlesstcg.s3.us-east-2.amazonaws.com/pokemon/gen9/{pokemon}.png"
+        pokemon_png_url = f"https://r2.limitlesstcg.net/pokemon/gen9/{pokemon}.png"
         result += f"<img src={pokemon_png_url} style=\"35px;\">"
     return result
 
