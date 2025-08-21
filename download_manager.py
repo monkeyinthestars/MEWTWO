@@ -7,7 +7,7 @@ import time
 
 import requests
 from bs4 import BeautifulSoup
-from mlp import print_del
+from mlp.bettercoding import print_del
 
 only_useragent_headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/80.0",

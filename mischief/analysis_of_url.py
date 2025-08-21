@@ -16,7 +16,7 @@ sys.path.append(parent)
 
 from collections import Counter
 
-from mlp.chrono import start_chrono
+from mlp.bettercoding.chrono import start_chrono
 
 chrono = start_chrono()
 chrono.print_elapsed()

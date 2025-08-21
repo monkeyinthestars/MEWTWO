@@ -31,8 +31,9 @@ RK9_URL_LIST = [
     # "https://rk9.gg/pairings/LI01majszra4hnrtxJST", # Lilles
     # "https://rk9.gg/pairings/LA01mwu6ugCwMEJxWT2H", # LAIC
     # "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
-    "https://rk9.gg/pairings/AT01mlKrCumqFDXZi5Y1", # Atlanta
-    "https://rk9.gg/pairings/MO01mgPastEftTZwIqYU", # Monterrey
+    # "https://rk9.gg/pairings/AT01mlKrCumqFDXZi5Y1", # Atlanta
+    # "https://rk9.gg/pairings/MO01mgPastEftTZwIqYU", # Monterrey
+    "https://rk9.gg/pairings/WCS01w2Vf7wv855Yvhir", # Worlds 2025
 ]
 
 
@@ -51,8 +52,8 @@ def get_decklist_from_url(url: str) -> List[Tuple[str, int]]:
         ValueError: If the decklist does not have exactly 60 cards.
     """
     soup = get_soup_from_url(url)
-    table = soup.findAll("table")[0]
-    all_card_lines = table.findAll("li")
+    table = soup.find_all("table")[0]
+    all_card_lines = table.find_all("li")
 
     decklist = {}
     for card in all_card_lines:
@@ -90,10 +91,10 @@ def get_decklist_url_per_player(url: str) -> Dict[str, str]:
 
     decklist_url_per_player = {}
 
-    roster_table = soup.findAll("div", class_="card-body")[0].findAll("tbody")[0]
-    table_row_list = roster_table.findAll("tr")
+    roster_table = soup.find_all("div", class_="card-body")[0].find_all("tbody")[0]
+    table_row_list = roster_table.find_all("tr")
     for row in table_row_list:
-        row_infos = row.findAll("td")
+        row_infos = row.find_all("td")
         first_name = row_infos[1].text.strip()
         last_name = row_infos[2].text.strip()
         country = row_infos[3].text.strip()
@@ -103,7 +104,7 @@ def get_decklist_url_per_player(url: str) -> Dict[str, str]:
         if division != "Masters":
             continue
         if decklist_status == "View":
-            decklist_url = "https://rk9.gg" + decklist_slot.findAll("a")[0]["href"]
+            decklist_url = "https://rk9.gg" + decklist_slot.find_all("a")[0]["href"]
             player_name_whole = f"{first_name} {last_name} [{country}]"
             decklist_url_per_player[player_name_whole] = decklist_url
 
@@ -148,7 +149,7 @@ def _max_round_from_soup(soup: BeautifulSoup) -> int:
     round_number = 1
     while True:
         round_n_div = soup.find("div", {"id": f"P2R{round_number}"})
-        if round_n_div == None:
+        if round_n_div is None:
             return round_number-1
         round_number += 1
 
@@ -174,12 +175,12 @@ def get_all_pairings_per_round(tournament_url: str) -> List[List[Tuple[str, str,
         url = tournament_url+ "?pod=2&rnd=" + str(round_n)
         soup = get_soup_from_url(url)
         # round_n_div = soup.find("div", {"id": f"P2R{round_n}"})
-        match_div_list = soup.findAll("div", class_="match")
+        match_div_list = soup.find_all("div", class_="match")
 
         match_list_of_this_round = []
         print(f"Round number {round_n}, nb matchs = {len(match_div_list)}")
         for div_match in match_div_list:
-            div_player1, div_table_number, div_player2 = div_match.findAll("div")
+            div_player1, div_table_number, div_player2 = div_match.find_all("div")
             if div_table_number.text == "Table #":
                 continue
             player_name1 = div_player1.find("span").text
