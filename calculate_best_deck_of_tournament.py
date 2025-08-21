@@ -1,6 +1,9 @@
 from collections import Counter
 
-from generate_matchup_table import get_matchup_table, get_players_infos_from_tournament_url
+from generate_matchup_table import (
+    get_matchup_table,
+    get_players_decklist_infos_from_tournament_url,
+)
 
 RK9_URL = "https://rk9.gg/pairings/NA01wsS5yrQoQIs3mDtB" # NAIC
 
@@ -11,7 +14,7 @@ NO_MATCH_POINTS = 0
 
 
 def get_archetype_counter(url):
-    players_infos = get_players_infos_from_tournament_url(url)
+    players_infos = get_players_decklist_infos_from_tournament_url(url)
     archetype_list = [", ".join(infos["archetype"]) for infos in players_infos.values()]
     return Counter(archetype_list)
     # return {'chien-pao': 10,
@@ -48,13 +51,13 @@ def get_repartition_of_archetypes(url_list):
 
 
 def main():
-    
+
     print("Getting archetype repartition...")
     archetype_repartition = get_repartition_of_archetypes(RK9_URL_LIST)
     print("Getting matchup table...")
     matchup_table = get_matchup_table(RK9_URL)
     print(matchup_table)
-    
+
     score_per_archetype = {}
     for archetype, matchup_data in matchup_table.items():
         archetype_score = 0
@@ -68,18 +71,18 @@ def main():
             repartition_in_the_tournament = archetype_repartition[archetype_opponent]
             archetype_score += (repartition_in_the_tournament * average_points)
         score_per_archetype[archetype] = archetype_score
-    
+
     archetype_counter = get_archetype_counter(RK9_URL)
     archetype_counter["comfey, iron-hands"] = 15
-    
+
     score_per_archetype = list(score_per_archetype.items())
     score_per_archetype.sort(key=lambda x: x[1], reverse=True)
-    
+
     print("archetype                 | score  | number in the tournament")
     for archetype, score in score_per_archetype:
         print(f"{archetype:25} |  {score:.2f}  | {archetype_counter[archetype]}")
-    
-    
+
+
 
 if __name__ == "__main__":
     main()

@@ -30,7 +30,9 @@ RK9_URL_LIST = [
     # "https://rk9.gg/pairings/LO01mZ7ppP5mQLSyxdbT", # Louisville
     # "https://rk9.gg/pairings/LI01majszra4hnrtxJST", # Lilles
     # "https://rk9.gg/pairings/LA01mwu6ugCwMEJxWT2H", # LAIC
-    "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
+    # "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
+    "https://rk9.gg/pairings/AT01mlKrCumqFDXZi5Y1", # Atlanta
+    "https://rk9.gg/pairings/MO01mgPastEftTZwIqYU", # Monterrey
 ]
 
 
@@ -169,8 +171,8 @@ def get_all_pairings_per_round(tournament_url: str) -> List[List[Tuple[str, str,
     round_history = []
     max_number_of_rounds = 18
     for round_n in range(1, max_number_of_rounds+1):
-
-        soup = get_soup_from_url(tournament_url+ "?pod=2&rnd=" + str(round_n))
+        url = tournament_url+ "?pod=2&rnd=" + str(round_n)
+        soup = get_soup_from_url(url)
         # round_n_div = soup.find("div", {"id": f"P2R{round_n}"})
         match_div_list = soup.findAll("div", class_="match")
 
@@ -192,7 +194,10 @@ def get_all_pairings_per_round(tournament_url: str) -> List[List[Tuple[str, str,
             elif "winner" in div_player2["class"]:
                 winner_tag = "P2"
             else:
-                raise KeyError("Winner not found while looking at the match div")
+                # This means the player dropped off. The website handles that by putting the player alone,
+                # on a table marked as complete, without any winner, loser or tie tag. We should handle that by
+                # ingoring it
+                continue
             match_list_of_this_round.append((player_name1, player_name2, winner_tag))
         round_history.append(match_list_of_this_round)
     return round_history
