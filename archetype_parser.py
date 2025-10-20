@@ -85,65 +85,37 @@ def parse_decklist_into_archetype(decklist: List[Tuple[str, int]]) -> List[str]:
         return all(is_in_decklist(card, decklist) for card in card_list)
 
     if contains("Charizard ex", "Pidgeot ex") and is_in_decklist_with_quantity("Charizard ex", 2, decklist):
-        return ["charizard", "pidgeot"]
+        return ["charizard"]
     if contains("Chien-Pao ex"):
         return ["chien-pao"]
-    if contains("Snorlax PGO"):
-        return ["snorlax"]
     if contains("Gardevoir ex", "Drifloon") or contains("Gardevoir ex", "Munkidori"):
         return ["gardevoir"]
-    if contains("Lugia V"):
-        return ["lugia"]
-    if contains("Walking Wake") or contains("Great Tusk", "Flutter Mane"):
-        return ["roaring-moon", "flutter-mane"]
     if contains("Roaring Moon ex", "Squawkabilly ex"):
         return ["roaring-moon", "squawkabilly"]
     if contains("Roaring Moon", "Dundunsparce"):
         return ["roaring-moon", "dundunsparce"]
-    if contains("Giratina", "Comfey"):
-        return ["giratina-origin", "comfey"]
-    if contains("Arceus", "Goodra"):
-        return ["arceus", "goodra"]
-    if contains("Arceus", "Giratina"):
-        return ["arceus", "giratina-origin"]
-    if contains("Iron Hands ex", "Iron Leaves ex"):
-        return ["iron-hands", "iron-leaves"]
-    if contains("Iron Hands ex", "Iron Crown ex"):
-        return ["iron-hands", "iron-crown"]
-    if contains("Origin Forme Dialga V", "Metang"):
-        return ["dialga-origin", "metang"]
+    if contains("Wellspring Mask Ogerpon ex", "Noctowl"):
+        return ["noctowl", "ogerpon-wellspring"]
+    if is_in_decklist_with_quantity("Ceruledge ex", 3, decklist):
+        return ["ceruledge"]
+    if contains("Roaring Moon"):
+        return ["roaring-moon"]
+    if contains("Mega Absol ex", "Mega Kangaskhan ex"):
+        return ["absol-mega", "kangaskhan-mega"]
     if contains("Gholdengo ex"):
         return ["gholdengo"]
     if contains("Miraidon ex", "Joltik"):
         return ["miraidon", "joltik"]
-    if contains("Arceus", "Alolan Vulpix V"):
-        return ["arceus", "vulpix-alola"]
-    # if contains("Espathra ex", "Xatu"):
-    #     return ["espathra", "xatu"]
-    # if contains("Great Tusk"):
-        # return ["great-tusk"]
-    if contains("Regidrago V"):
-        return ["regidrago"]
     if contains("Dragapult ex", "Pidgeot ex"):
         return ["dragapult", "pidgeot"]
     if contains("Dragapult ex", "Dusknoir"):
         return ["dragapult", "dusknoir"]
-    # if contains("Dragapult ex", "Comfey"):
-        # return ["dragapult", "comfey"]
     if contains("Raging Bolt ex", "Noctowl"):
         return ["raging-bolt", "noctowl"]
-    if contains("Pidgeot ex", "Rotom V") and not contains("Charizard ex") and not contains("Dragapult ex"):
-        return ["pidgeot", "rotom"]
-    if contains("Comfey", "Iron Hands ex"):
-        return ["comfey", "iron-hands"]
+    if is_in_decklist_with_quantity("Crustle", 3, decklist):
+        return ["crustle"]
     if is_in_decklist_with_quantity("Iron Thorns ex", 4, decklist):
         return ["iron-thorns"]
-    # if contains("Terapagos ex"):
-    #     return ["terapagos"]
-    if contains("Origin Form Palkia V"):
-        return ["palkia-origin"]
-    if contains("Klawf", "Hisuan Electrode V"):
-        return ["klawf", "electrode-hisui"]
     if contains("Noivern ex", "Cornerstone Mask Ogerpon ex"):
         return ["ogerpon-cornerstone", "noivern"]
     if contains("Marnie's Grimmsnarl", "Froslass"):
@@ -154,4 +126,6 @@ def parse_decklist_into_archetype(decklist: List[Tuple[str, int]]) -> List[str]:
         return ["zoroark"]
     if contains("Milotic ex", "Cornerstone Mask Ogerpon ex"):
         return ["milotic"]
+    if contains("Pidgeot ex", "Elgyem", "Mist Energy"):
+        return ["pidgeot"]
     return ["unown"]
