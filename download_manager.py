@@ -3,7 +3,9 @@ Goal: Avoid redownloading static pages by caching them on disk.
 """
 
 import os
+import pickle
 import time
+from urllib.parse import quote
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,7 +32,7 @@ def get_page_from_url(url: str, max_retries: int = 100) -> requests.Response:
     while True:
         try:
             page = requests.get(url, headers=only_useragent_headers, timeout=120)
-            return page
+            return page.content
         except requests.exceptions.RequestException as e:
             if nb_retry >= max_retries:
                 raise e
@@ -41,36 +43,10 @@ def get_page_from_url(url: str, max_retries: int = 100) -> requests.Response:
         nb_retry += 1
 
 
-def get_url(url: str) -> bytes:
-    """
-    Retrieves the content of a URL. If the content is cached locally, loads it from disk.
-    Otherwise, downloads the content and caches it.
-
-    Args:
-        url (str): The URL to retrieve content from.
-
-    Returns:
-        bytes: The binary content of the URL.
-    """
-    path_on_disk = url.replace("https://", "").replace("http://", "")
-    path_on_disk = path_on_disk.replace("?", "__QUESTIONMARKTOKEN__")
-    path_on_disk = path_on_disk.replace("&", "__AMPTOKEN__")
-    path_on_disk = path_on_disk.replace("=", "__EQTOKEN__")
-    if os.path.exists(path_on_disk):
-        with open(path_on_disk, "rb") as f:
-            content = f.read()
-        return content
-    page = get_page_from_url(url)
-    content = page.content
-    os.makedirs(os.path.dirname(path_on_disk), exist_ok=True)
-    with open(path_on_disk, "wb") as f:
-        f.write(content)
-    return content
-
-
 def get_soup_from_url(url: str) -> BeautifulSoup:
     """
-    Retrieves a BeautifulSoup object parsed from the content of a URL.
+    Retrieves a BeautifulSoup object parsed from the content of a URL. If the content is cached locally,
+    loads it from disk. Otherwise, downloads the content and caches it.
 
     Args:
         url (str): The URL to retrieve and parse.
@@ -78,6 +54,17 @@ def get_soup_from_url(url: str) -> BeautifulSoup:
     Returns:
         BeautifulSoup: A BeautifulSoup object representing the parsed HTML content.
     """
-    content = get_url(url)
+    path_on_disk = quote(url.replace("https://", ""), encoding="utf-8")
+    path_on_disk += ".pkl"
+    print(f"{path_on_disk = }")
+    
+    if os.path.exists(path_on_disk):
+        with open(path_on_disk, "rb") as f:
+            content = pickle.load(f)
+        return content
+    content = get_page_from_url(url)
     soup = BeautifulSoup(content, "html.parser")
+    os.makedirs(os.path.dirname(path_on_disk), exist_ok=True)
+    with open(path_on_disk, "wb") as f:
+        pickle.dump(soup, f)
     return soup

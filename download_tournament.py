@@ -23,23 +23,24 @@ import random
 import threading
 from typing import List
 
-from download_manager import get_url
+from download_manager import get_soup_from_url
 from generate_matchup_table import get_decklist_url_per_player
 
 RK9_URL = "https://rk9.gg/pairings/WCS01mIMYt8if4wVuaO0" # Worlds
 RK9_URL = "https://rk9.gg/pairings/AT01mlKrCumqFDXZi5Y1" # Atlanta
-NB_CONCURENCY = 10
+RK9_URL = "https://rk9.gg/pairings/MK01mzXPKCuqXfZ1ay6j"
+NB_CONCURENCY = 40
 
 
 def download_urls(url_list: List[str]) -> None:
     """
-    Ensure a list of URLs is downloaded by calling the `get_url` function.
+    Ensure a list of URLs is downloaded by calling the `get_soup_from_url` function.
 
     Args:
         url_list (List[str]): A list of URLs to download.
     """
     for url in url_list:
-        get_url(url)
+        get_soup_from_url(url)
 
 def split(lst: List[str], parts: int) -> List[List[str]]:
     """
