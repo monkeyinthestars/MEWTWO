@@ -33,7 +33,9 @@ RK9_URL_LIST = [
     # "https://rk9.gg/pairings/SG01meRA8mIYExcTihNU", # Stuttgart
     # "https://rk9.gg/pairings/AT01mlKrCumqFDXZi5Y1", # Atlanta
     # "https://rk9.gg/pairings/MO01mgPastEftTZwIqYU", # Monterrey
-    "https://rk9.gg/pairings/WCS01w2Vf7wv855Yvhir", # Worlds 2025
+    # "https://rk9.gg/pairings/WCS01w2Vf7wv855Yvhir", # Worlds 2025
+    "https://rk9.gg/pairings/BE01wYmCBW1HzjObcfgo", # Belo Horizonte
+    "https://rk9.gg/pairings/MK01mzXPKCuqXfZ1ay6j", # Milwaukee
 ]
 
 
