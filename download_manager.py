@@ -4,10 +4,12 @@ Goal: Avoid redownloading static pages by caching them on disk.
 
 import os
 import time
+from urllib.parse import quote
 
 import requests
 from bs4 import BeautifulSoup
 from mlp.bettercoding import print_del
+
 
 only_useragent_headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/80.0",
@@ -52,10 +54,7 @@ def get_url(url: str) -> bytes:
     Returns:
         bytes: The binary content of the URL.
     """
-    path_on_disk = url.replace("https://", "").replace("http://", "")
-    path_on_disk = path_on_disk.replace("?", "__QUESTIONMARKTOKEN__")
-    path_on_disk = path_on_disk.replace("&", "__AMPTOKEN__")
-    path_on_disk = path_on_disk.replace("=", "__EQTOKEN__")
+    path_on_disk = quote(url.replace("https://", ""), encoding="utf-8")
     if os.path.exists(path_on_disk):
         with open(path_on_disk, "rb") as f:
             content = f.read()
