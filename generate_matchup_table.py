@@ -10,9 +10,11 @@ Example Usage:
     table_data = parse_matchup_table_into_table_data(cleaned_table)
     create_html_table(table_data, "matchups.html")
 """
-
+import os
 from collections import Counter
 from typing import Dict, List, Tuple
+from urllib.parse import quote
+import pickle
 
 from bs4 import BeautifulSoup
 from mlp.html_table import create_html_table
@@ -125,6 +127,13 @@ def get_players_decklist_infos_from_tournament_url(url: str) -> Dict[str, Dict[s
             The returned dict is formatted as such:
             `{"Player Name [COUNTRY]": {"decklist": [cards], "archetype": ["pokemon1", "pokemon2"]} }`
     """
+    path_on_disk = "./processed_database/" + quote(url.replace("https://", ""), encoding="utf-8") + ".pkl"
+    if os.path.exists(path_on_disk):
+        print(f"Player database exists on disk. Loading from {path_on_disk}")
+        with open(path_on_disk, "rb") as f:
+            content = pickle.load(f)
+        return content
+
     player_database = {}
     decklist_url_per_player = get_decklist_url_per_player(url)
 
@@ -135,6 +144,11 @@ def get_players_decklist_infos_from_tournament_url(url: str) -> Dict[str, Dict[s
             print(decklist_url)
 
         player_database[playername] = {"decklist": decklist, "archetype": archetype}
+
+    os.makedirs(os.path.dirname(path_on_disk), exist_ok=True)
+    with open(path_on_disk, "wb") as f:
+        pickle.dump(player_database, f)
+
     return player_database
 
 
@@ -306,7 +320,7 @@ def parse_matchup_table_into_table_data(matchup_data: Dict[str, Dict[str, List[i
     archetype_list = matchup_data.keys()
     matchup_ratio = {
         archetype_p1: {
-            archetype_p2: -1
+            archetype_p2: -1.
             for archetype_p2 in archetype_list
         }
         for archetype_p1 in archetype_list
@@ -375,6 +389,5 @@ if __name__ == "__main__":
     matchup_table = remove_low_occurrences(matchup_table, nb_occurence_min=1)
     print("Parsing data...")
     table_data = parse_matchup_table_into_table_data(matchup_table)
-    print(table_data)
     print("Creating html table...")
     create_html_table(table_data, "matchups.html")
